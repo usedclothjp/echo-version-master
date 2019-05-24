@@ -1,0 +1,55 @@
+version: 2
+jobs:
+  # Golangビルド、テストのジョブ
+  build:
+    # (1) CircleCIコンテナのワーキングディレクトリ
+    working_directory: /go/src/github.com/work/echo-version-master
+    # (2) ジョブを実行するコンテナのDockerイメージ
+    docker:
+      - image: golang:1.9-alpine
+    steps:
+      - checkout # (3) リポジトリからソースコードをチェックアウト
+      - run: # (4) Golangのテスト
+          name: test
+          command: go test
+      - run: # (5) go buildのテスト
+          name: build
+          command: go build -o bin/echo-version main.go
+      - persist_to_workspace: # (6) workspaceを後続のジョブで利用するために保存
+          root: . 
+          paths:
+            - . 
+
+  docker_build_push:
+    working_directory: /go/src/github.com/work/echo-version-master
+    docker:
+      - image: docker:18.05.0-ce-dind # (7) dockerコマンドを利用できるコンテナ
+    steps:
+      - attach_workspace: # (8) (6)で永続化したworkspaceを配置
+          at: .
+      - setup_remote_docker: # (9) docker buildをするためのdaemonを用意
+          version: 18.05.0-ce
+      - run: # (10) docker build
+          name: docker image build
+          command: docker image build -t gihyodocker/echo-version:latest .
+      - run: # (11) ビルドイメージの確認
+          name: show docker image ls
+          command: docker image ls
+      - run: # (12) Docker Hubにログイン
+          name: docker login
+          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run: # (13) latestイメージをDocker Hubにpush
+          name: release latest
+          command: docker image push gihyodocker/echo-version:latest 
+
+workflows:
+  version: 2
+  build_and_push:
+    jobs: # (14) workflowsとして実行するジョブを列挙
+      - build
+      - docker_build_push:
+          requires: # (15) buildジョブの後に実行
+            - build
+          filters: # (16) masterブランチの際だけ実行
+            branches:
+              only: master
