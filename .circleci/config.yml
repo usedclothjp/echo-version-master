@@ -40,7 +40,7 @@ jobs:
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
       - run: # (13) latestイメージをDocker Hubにpush
           name: release latest
-          command: docker image push gihyodocker/echo-version:latest 
+          command: docker image push lifepepper/echo-version
 
 workflows:
   version: 2
