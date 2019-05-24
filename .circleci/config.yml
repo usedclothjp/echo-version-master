@@ -31,7 +31,7 @@ jobs:
           version: 18.05.0-ce
       - run: # (10) docker build
           name: docker image build
-          command: docker image build -t gihyodocker/echo-version:latest .
+          command: docker image build -t lifepepper/echo-version:latest .
       - run: # (11) ビルドイメージの確認
           name: show docker image ls
           command: docker image ls
